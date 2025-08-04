@@ -1,0 +1,124 @@
+[package]
+name = "real-remote-desktop-agent"
+version = "1.0.0"
+edition = "2021"
+authors = ["Real Remote Desktop Team"]
+description = "Native agent for Real Remote Desktop platform"
+license = "MIT"
+repository = "https://github.com/real-remote-desktop/agent"
+
+[dependencies]
+# Core dependencies
+tokio = { version = "1.0", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+uuid = { version = "1.0", features = ["v4"] }
+chrono = { version = "0.4", features = ["serde"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+anyhow = "1.0"
+thiserror = "1.0"
+
+# WebRTC and networking
+webrtc = "0.9"
+tokio-tungstenite = { version = "0.20", features = ["native-tls"] }
+tungstenite = { version = "0.20", features = ["native-tls"] }
+url = "2.4"
+http = "0.2"
+
+# Screen capture and graphics
+wgpu = "0.17"
+winit = "0.28"
+raw-window-handle = "0.5"
+image = "0.24"
+bytemuck = "1.13"
+
+# Platform-specific screen capture
+#[cfg(target_os = "windows")]
+windows = { version = "0.48", features = [
+    "Win32_Graphics_Gdi",
+    "Win32_UI_WindowsAndMessaging",
+    "Win32_Foundation",
+    "Win32_System_Threading",
+    "Win32_UI_Input_KeyboardAndMouse"
+]}
+
+#[cfg(target_os = "linux")]
+x11rb = "0.10"
+#[cfg(target_os = "linux")]
+libxcb = "1.0"
+
+# Audio capture (optional)
+#[cfg(feature = "audio")]
+cpal = "0.15"
+
+# Input injection
+#[cfg(target_os = "windows")]
+enigo = { version = "0.1", features = ["windows"] }
+#[cfg(target_os = "linux")]
+enigo = { version = "0.1", features = ["linux"] }
+#[cfg(target_os = "macos")]
+enigo = { version = "0.1", features = ["macos"] }
+
+# Configuration and CLI
+clap = { version = "4.0", features = ["derive"] }
+config = "0.13"
+dirs = "5.0"
+
+# Security and crypto
+ring = "0.16"
+base64 = "0.21"
+sha2 = "0.10"
+
+# Compression
+flate2 = "1.0"
+brotli = "3.3"
+
+# Video encoding
+#[cfg(feature = "video-encoding")]
+rav1e = "0.6"
+#[cfg(feature = "video-encoding")]
+x264 = "0.2"
+
+# System integration
+#[cfg(target_os = "windows")]
+winapi = { version = "0.3", features = ["winuser", "wingdi"] }
+#[cfg(target_os = "linux")]
+nix = "0.26"
+
+# Utilities
+rand = "0.8"
+hex = "0.4"
+base64 = "0.21"
+
+[dev-dependencies]
+tokio-test = "0.4"
+tempfile = "3.6"
+
+[features]
+default = ["video-encoding"]
+video-encoding = []
+audio = []
+tray = ["tray-item"]
+
+# Platform-specific features
+#[cfg(target_os = "windows")]
+windows-tray = ["tray-item", "windows"]
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+
+[profile.dev]
+opt-level = 0
+debug = true
+
+[[bin]]
+name = "real-remote-desktop-agent"
+path = "src/main.rs"
+
+[lib]
+name = "real_remote_desktop_agent"
+path = "src/lib.rs" 

@@ -1,0 +1,120 @@
+---
+alwaysApply: true
+---
+# Development Workflow Guidelines
+
+## Git Workflow
+
+### Branch Strategy
+- `main`: Production-ready code
+- `develop`: Integration branch for features
+- `feature/*`: Feature development branches
+- `bugfix/*`: Bug fix branches
+- `hotfix/*`: Critical production fixes
+
+### Commit Standards
+- Use conventional commit format: `type(scope): description`
+- Types: feat, fix, docs, style, refactor, test, chore
+- Scope: component, service, util, etc.
+- Description: Clear, concise explanation
+
+### Pull Request Process
+1. Create feature branch from `develop`
+2. Implement feature with tests
+3. Update documentation
+4. Create PR with detailed description
+5. Code review and approval
+6. Merge to `develop`
+
+## Development Environment
+
+### Local Setup
+- Node.js 18+ required
+- Use `.nvmrc` for version management
+- Install dependencies with `npm install`
+- Use `npm run dev` for development server
+- Use `npm run build` for production build
+
+### Code Quality Tools
+- ESLint for code linting
+- Prettier for code formatting
+- Husky for pre-commit hooks
+- Jest for unit testing
+- Playwright for E2E testing
+
+### IDE Configuration
+- Use Cursor IDE with provided rules
+- Enable format on save
+- Use TypeScript for type safety
+- Configure debugging for browser testing
+
+## Testing Strategy
+
+### Unit Tests
+- Test all utility functions
+- Mock external dependencies
+- Achieve 80%+ code coverage
+- Use Jest for test framework
+
+### Integration Tests
+- Test component interactions
+- Test service integrations
+- Test API endpoints
+- Use Playwright for browser testing
+
+### E2E Tests
+- Test complete user workflows
+- Test connection scenarios
+- Test error handling
+- Test cross-browser compatibility
+
+## Performance Monitoring
+
+### Metrics to Track
+- Page load time
+- Connection establishment time
+- Frame rate during remote sessions
+- Memory usage
+- Network latency
+
+### Optimization Strategies
+- Lazy load components
+- Use Web Workers for heavy tasks
+- Optimize canvas rendering
+- Implement proper caching
+- Monitor bundle size
+
+## Security Practices
+
+### Code Review Checklist
+- Input validation
+- XSS prevention
+- CSRF protection
+- Secure credential handling
+- Proper error handling
+
+### Security Testing
+- Regular dependency audits
+- Penetration testing
+- Security code reviews
+- Compliance checks
+
+## Deployment
+
+### Environment Configuration
+- Development: Local development
+- Staging: Pre-production testing
+- Production: Live application
+
+### Build Process
+1. Run tests
+2. Build production assets
+3. Optimize and minify
+4. Generate service worker
+5. Deploy to CDN
+
+### Monitoring
+- Error tracking (Sentry)
+- Performance monitoring
+- User analytics
+- Security monitoring 
