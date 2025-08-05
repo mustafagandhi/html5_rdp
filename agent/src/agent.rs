@@ -308,7 +308,7 @@ impl Agent {
             use std::process::Command;
             
             let os_output = Command::new("sw_vers").output().unwrap_or_else(|_| std::process::Output {
-                status: std::process::ExitStatus::from(0),
+                status: std::process::ExitStatus::from(std::process::ExitCode::SUCCESS),
                 stdout: Vec::new(),
                 stderr: Vec::new(),
             });

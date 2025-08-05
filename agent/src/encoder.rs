@@ -63,8 +63,6 @@ impl VideoEncoder {
         // For now, return the YUV data as-is since OpenH264 requires specific YUV format
         // In a full implementation, we would convert to the proper YUV format
         Ok(yuv_data)
-        
-        Ok(encoded_frame.to_vec())
     }
 
     pub async fn encode_frame_to_frame(&mut self, rgba_data: Vec<u8>) -> AgentResult<Frame> {
