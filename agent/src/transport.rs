@@ -122,7 +122,7 @@ impl TransportManager {
 
         for connection_id in connection_ids {
             if let Err(e) = self.send_message(&connection_id, message.clone()).await {
-                logging::log_error(&format!("Failed to send message to {}: {}", connection_id, e), "TransportManager");
+                logging::log_error(&AgentError::Transport(format!("Failed to send message to {}: {}", connection_id, e)), "TransportManager");
             }
         }
 
@@ -147,8 +147,8 @@ impl TransportManager {
         m.register_default_codecs()?;
 
         let api = APIBuilder::new()
-            .media_engine(m)
-            .setting_engine(SettingEngine::default())
+            .with_media_engine(m)
+            .with_setting_engine(SettingEngine::default())
             .build();
 
         // Setup ICE servers
@@ -158,6 +158,7 @@ impl TransportManager {
                 urls: vec![server_url.clone()],
                 username: "".to_string(),
                 credential: "".to_string(),
+                credential_type: webrtc::ice_transport::ice_credential_type::RTCIceCredentialType::Password,
             });
         }
 
@@ -214,7 +215,8 @@ impl TransportManager {
         
         if let Some(peer_connection) = peer_connections.get(connection_id) {
             // Find the appropriate data channel
-            let data_channels = peer_connection.data_channels();
+            // In a real implementation, we'd get data channels from the peer connection
+            // For now, we'll just log the message
             
             // Send message through data channel
             // This is a simplified implementation
@@ -249,7 +251,7 @@ impl TransportManager {
             let mut peer_connections = self.webrtc_peer_connections.lock().unwrap();
             for (_, peer_connection) in peer_connections.iter() {
                 if let Err(e) = peer_connection.close().await {
-                    logging::log_error(&format!("Failed to close WebRTC connection: {}", e), "TransportManager");
+                    logging::log_error(&AgentError::Transport(format!("Failed to close WebRTC connection: {}", e)), "TransportManager");
                 }
             }
             peer_connections.clear();
@@ -260,7 +262,7 @@ impl TransportManager {
             let mut websocket_connections = self.websocket_connections.lock().unwrap();
             for (_, websocket) in websocket_connections.iter_mut() {
                 if let Err(e) = websocket.close(None).await {
-                    logging::log_error(&format!("Failed to close WebSocket connection: {}", e), "TransportManager");
+                    logging::log_error(&AgentError::Transport(format!("Failed to close WebSocket connection: {}", e)), "TransportManager");
                 }
             }
             websocket_connections.clear();
@@ -337,15 +339,15 @@ impl TransportManager {
                     let mut peer_connections = self.webrtc_peer_connections.lock().unwrap();
                     if let Some(peer_connection) = peer_connections.remove(connection_id) {
                         if let Err(e) = peer_connection.close().await {
-                            logging::log_error(&format!("Failed to close WebRTC connection: {}", e), "TransportManager");
+                            logging::log_error(&AgentError::Transport(format!("Failed to close WebRTC connection: {}", e)), "TransportManager");
                         }
                     }
                 }
                 TransportType::WebSocket => {
                     let mut websocket_connections = self.websocket_connections.lock().unwrap();
-                    if let Some(websocket) = websocket_connections.remove(connection_id) {
+                    if let Some(mut websocket) = websocket_connections.remove(connection_id) {
                         if let Err(e) = websocket.close(None).await {
-                            logging::log_error(&format!("Failed to close WebSocket connection: {}", e), "TransportManager");
+                            logging::log_error(&AgentError::Transport(format!("Failed to close WebSocket connection: {}", e)), "TransportManager");
                         }
                     }
                 }

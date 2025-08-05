@@ -16,8 +16,12 @@ uuid = { version = "1.0", features = ["v4", "serde"] }
 chrono = { version = "0.4", features = ["serde"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-appender = "0.2"
 anyhow = "1.0"
 thiserror = "1.0"
+
+# Video encoding
+openh264 = "0.2"
 
 # WebRTC and networking
 webrtc = "0.9"
@@ -37,6 +41,9 @@ toml = "0.8"
 ring = "0.16"
 base64 = "0.21"
 sha2 = "0.10"
+
+# Windows service
+windows-service = "0.6"
 
 # Compression
 flate2 = "1.0"

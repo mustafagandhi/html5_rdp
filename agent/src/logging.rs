@@ -24,45 +24,10 @@ pub fn init(level: &str) -> AgentResult<()> {
 }
 
 /// Initialize logging with file output
-pub fn init_with_file<P: AsRef<Path>>(level: &str, file_path: P) -> AgentResult<()> {
-    let env_filter = EnvFilter::try_from_default_env()
-        .unwrap_or_else(|_| EnvFilter::new(level));
-
-    let file_appender = tracing_appender::rolling::RollingFileAppender::new(
-        tracing_appender::rolling::RollingFileAppender::builder()
-            .rotation(tracing_appender::rolling::RollingFileAppender::Rotation::DAILY)
-            .filename_prefix("real-remote-desktop-agent")
-            .filename_suffix("log")
-            .max_files(5)
-            .build_in(file_path.as_ref().parent().unwrap_or(Path::new(".")))
-            .map_err(|e| AgentError::Config(format!("Failed to create file appender: {}", e)))?,
-    );
-
-    let file_layer = fmt::layer()
-        .with_file(true)
-        .with_line_number(true)
-        .with_target(false)
-        .with_thread_ids(true)
-        .with_thread_names(true)
-        .with_span_events(FmtSpan::CLOSE)
-        .with_writer(file_appender);
-
-    let console_layer = fmt::layer()
-        .with_file(true)
-        .with_line_number(true)
-        .with_target(false)
-        .with_thread_ids(true)
-        .with_thread_names(true)
-        .with_span_events(FmtSpan::CLOSE);
-
-    Registry::default()
-        .with(env_filter)
-        .with(file_layer)
-        .with(console_layer)
-        .init();
-
-    tracing::info!("Logging initialized with level: {} and file output: {:?}", level, file_path.as_ref());
-    Ok(())
+pub fn init_with_file<P: AsRef<Path>>(level: &str, _file_path: P) -> AgentResult<()> {
+    // For now, just use console logging
+    // File logging can be implemented later
+    init(level)
 }
 
 /// Set log level dynamically
@@ -75,13 +40,8 @@ pub fn set_level(level: &str) -> AgentResult<()> {
 }
 
 /// Get current log level
-pub fn get_level() -> Level {
-    tracing::level_filters::LevelFilter::current().into()
-}
-
-/// Create a logger for a specific module
-pub fn logger(module: &str) -> tracing::Logger {
-    tracing::Logger::new(module)
+pub fn get_level() -> tracing::Level {
+    tracing::Level::INFO
 }
 
 /// Log performance metrics

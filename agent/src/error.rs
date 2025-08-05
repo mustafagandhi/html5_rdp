@@ -14,9 +14,6 @@ pub enum AgentError {
     #[error("Transport error: {0}")]
     Transport(String),
 
-    #[error("WebRTC error: {0}")]
-    WebRTC(String),
-
     #[error("WebSocket error: {0}")]
     WebSocket(String),
 
@@ -25,6 +22,9 @@ pub enum AgentError {
 
     #[error("Video encoding error: {0}")]
     VideoEncoding(String),
+
+    #[error("Encoder error: {0}")]
+    EncoderError(String),
 
     #[error("Audio capture error: {0}")]
     AudioCapture(String),
@@ -49,6 +49,21 @@ pub enum AgentError {
 
     #[error("Other error: {0}")]
     Other(String),
+
+    #[error("UUID error: {0}")]
+    Uuid(#[from] uuid::Error),
+
+    #[error("System time error: {0}")]
+    SystemTime(#[from] std::time::SystemTimeError),
+
+    #[error("OpenH264 error: {0}")]
+    OpenH264(#[from] openh264::Error),
+
+    #[error("WebRTC error: {0}")]
+    WebRTC(#[from] webrtc::Error),
+
+    #[error("Encoder not initialized")]
+    EncoderNotInitialized,
 }
 
 impl AgentError {
@@ -72,11 +87,16 @@ impl AgentError {
             AgentError::Capture(msg) => AgentError::Capture(format!("{}: {}", context, msg)),
             AgentError::Input(msg) => AgentError::Input(format!("{}: {}", context, msg)),
             AgentError::Transport(msg) => AgentError::Transport(format!("{}: {}", context, msg)),
-            AgentError::WebRTC(msg) => AgentError::WebRTC(format!("{}: {}", context, msg)),
+            AgentError::WebRTC(e) => AgentError::WebRTC(e),
             AgentError::WebSocket(msg) => AgentError::WebSocket(format!("{}: {}", context, msg)),
             AgentError::Auth(msg) => AgentError::Auth(format!("{}: {}", context, msg)),
             AgentError::VideoEncoding(msg) => AgentError::VideoEncoding(format!("{}: {}", context, msg)),
+            AgentError::EncoderError(msg) => AgentError::EncoderError(format!("{}: {}", context, msg)),
             AgentError::AudioCapture(msg) => AgentError::AudioCapture(format!("{}: {}", context, msg)),
+            AgentError::Uuid(e) => AgentError::Uuid(e),
+            AgentError::SystemTime(e) => AgentError::SystemTime(e),
+            AgentError::OpenH264(e) => AgentError::OpenH264(e),
+            AgentError::EncoderNotInitialized => AgentError::EncoderNotInitialized,
             AgentError::System(msg) => AgentError::System(format!("{}: {}", context, msg)),
             AgentError::Network(msg) => AgentError::Network(format!("{}: {}", context, msg)),
             AgentError::Security(msg) => AgentError::Security(format!("{}: {}", context, msg)),

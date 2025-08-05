@@ -1,5 +1,6 @@
 use crate::{
     config::CaptureConfig,
+    encoder::VideoEncoder,
     error::{AgentError, AgentResult},
     logging,
     types::{Display, Frame, Metrics, Quality, VideoCodec},
@@ -38,6 +39,7 @@ pub struct CaptureManager {
     frame_tx: Option<mpsc::Sender<Frame>>,
     metrics: Arc<Mutex<Metrics>>,
     capture_handle: Option<tokio::task::JoinHandle<()>>,
+    encoder: Option<VideoEncoder>,
     start_time: Instant,
 }
 
@@ -61,6 +63,7 @@ impl CaptureManager {
             frame_tx: None,
             metrics: Arc::new(Mutex::new(Metrics::default())),
             capture_handle: None,
+            encoder: None,
             start_time: Instant::now(),
         })
     }
@@ -71,8 +74,11 @@ impl CaptureManager {
         // Discover displays
         self.discover_displays().await?;
 
-        // Start capture if video is enabled
+        // Initialize video encoder if video is enabled
         if self.config.video {
+            let mut encoder = VideoEncoder::new(self.config.clone())?;
+            encoder.initialize().await?;
+            self.encoder = Some(encoder);
             self.start_capture().await?;
         }
 
@@ -92,6 +98,11 @@ impl CaptureManager {
         // Wait for capture task to finish
         if let Some(handle) = self.capture_handle.take() {
             let _ = handle.await;
+        }
+
+        // Shutdown encoder
+        if let Some(mut encoder) = self.encoder.take() {
+            encoder.shutdown().await?;
         }
 
         logging::log_info("Capture Manager stopped", "CaptureManager");
@@ -155,7 +166,7 @@ impl CaptureManager {
     async fn start_capture(&mut self) -> AgentResult<()> {
         logging::log_info("Starting capture", "CaptureManager");
 
-        let frame_tx = self.frame_tx.clone().ok_or(AgentError::ConfigurationError(
+        let frame_tx = self.frame_tx.clone().ok_or(AgentError::Config(
             "Frame sender not set".to_string(),
         ))?;
 
@@ -183,21 +194,21 @@ impl CaptureManager {
                     match Self::capture_frame(&config, &displays).await {
                         Ok(frame) => {
                             if let Err(e) = frame_tx.send(frame).await {
-                                logging::log_error(&format!("Failed to send frame: {}", e), "CaptureManager");
+                                logging::log_error(&AgentError::Transport(format!("Failed to send frame: {}", e)), "CaptureManager");
                                 break;
                             }
 
                             // Update metrics
                             {
                                 let mut metrics_guard = metrics.lock().unwrap();
-                                metrics_guard.fps = 1.0 / frame_interval.as_secs_f64();
-                                metrics_guard.frames_captured += 1;
+                                metrics_guard.fps = (1.0 / frame_interval.as_secs_f64()) as f32;
+                                metrics_guard.frame_drops += 0; // No drops for now
                             }
 
                             last_frame_time = now;
                         }
                         Err(e) => {
-                            logging::log_error(&format!("Failed to capture frame: {}", e), "CaptureManager");
+                            logging::log_error(&e, "CaptureManager");
                             tokio::time::sleep(Duration::from_millis(100)).await;
                         }
                     }
@@ -245,14 +256,12 @@ impl CaptureManager {
                 // For now, we'll create a single display entry
                 // In a full implementation, we'd enumerate all monitors
                 displays.push(Display {
-                    id: "primary".to_string(),
+                    id: 0,
                     name: "Primary Display".to_string(),
                     width: 1920,
                     height: 1080,
-                    x: 0,
-                    y: 0,
-                    is_primary: true,
                     refresh_rate: 60,
+                    primary: true,
                 });
             }
         }
@@ -265,14 +274,12 @@ impl CaptureManager {
         // Placeholder for Linux display discovery
         // Would use X11 or Wayland APIs
         Ok(vec![Display {
-            id: "primary".to_string(),
+            id: 0,
             name: "Primary Display".to_string(),
             width: 1920,
             height: 1080,
-            x: 0,
-            y: 0,
-            is_primary: true,
             refresh_rate: 60,
+            primary: true,
         }])
     }
 
@@ -281,20 +288,19 @@ impl CaptureManager {
         // Placeholder for macOS display discovery
         // Would use Core Graphics APIs
         Ok(vec![Display {
-            id: "primary".to_string(),
+            id: 0,
             name: "Primary Display".to_string(),
             width: 1920,
             height: 1080,
-            x: 0,
-            y: 0,
-            is_primary: true,
             refresh_rate: 60,
+            primary: true,
         }])
     }
 
     #[cfg(target_os = "windows")]
     async fn capture_windows_frame(config: &CaptureConfig, _displays: &Arc<Mutex<Vec<Display>>>) -> AgentResult<Frame> {
         static mut CAPTURE_CONTEXT: Option<WindowsCaptureContext> = None;
+        static mut ENCODER: Option<VideoEncoder> = None;
 
         unsafe {
             // Initialize capture context if not already done
@@ -311,19 +317,19 @@ impl CaptureManager {
                 });
             }
 
-            let context = CAPTURE_CONTEXT.as_mut().unwrap();
-            let frame_data = Self::capture_dxgi_frame(context).await?;
+            // Initialize encoder if not already done
+            if ENCODER.is_none() {
+                let mut encoder = VideoEncoder::new(config.clone())?;
+                encoder.initialize().await?;
+                ENCODER = Some(encoder);
+            }
 
-            let frame = Frame {
-                id: Uuid::new_v4().to_string(),
-                timestamp: chrono::Utc::now().timestamp_millis(),
-                width: config.width,
-                height: config.height,
-                format: VideoCodec::H264,
-                quality: config.quality.clone(),
-                data: frame_data,
-                display_id: "primary".to_string(),
-            };
+            let context = CAPTURE_CONTEXT.as_mut().unwrap();
+            let rgba_data = Self::capture_dxgi_frame(context).await?;
+
+            // Encode the frame using H.264
+            let encoder = ENCODER.as_mut().unwrap();
+            let frame = encoder.encode_frame_to_frame(rgba_data).await?;
 
             context.frame_count += 1;
             context.last_frame_time = Instant::now();
@@ -449,17 +455,17 @@ impl CaptureManager {
     async fn capture_linux_frame(config: &CaptureConfig, _displays: &Arc<Mutex<Vec<Display>>>) -> AgentResult<Frame> {
         // Placeholder for Linux frame capture
         // Would use X11 or Wayland APIs
-        let frame_data = vec![0u8; config.width as usize * config.height as usize * 4];
+        let frame_data = vec![0u8; 1920 * 1080 * 4]; // Default size
         
         Ok(Frame {
-            id: Uuid::new_v4().to_string(),
-            timestamp: chrono::Utc::now().timestamp_millis(),
-            width: config.width,
-            height: config.height,
+            id: Uuid::new_v4(),
+            timestamp: chrono::Utc::now().timestamp_millis() as u64,
+            width: 1920, // Default width
+            height: 1080, // Default height
+            data: frame_data,
             format: VideoCodec::H264,
             quality: config.quality.clone(),
-            data: frame_data,
-            display_id: "primary".to_string(),
+            compressed: false,
         })
     }
 
@@ -467,17 +473,17 @@ impl CaptureManager {
     async fn capture_macos_frame(config: &CaptureConfig, _displays: &Arc<Mutex<Vec<Display>>>) -> AgentResult<Frame> {
         // Placeholder for macOS frame capture
         // Would use Core Graphics APIs
-        let frame_data = vec![0u8; config.width as usize * config.height as usize * 4];
+        let frame_data = vec![0u8; 1920 * 1080 * 4]; // Default size
         
         Ok(Frame {
-            id: Uuid::new_v4().to_string(),
-            timestamp: chrono::Utc::now().timestamp_millis(),
-            width: config.width,
-            height: config.height,
+            id: Uuid::new_v4(),
+            timestamp: chrono::Utc::now().timestamp_millis() as u64,
+            width: 1920, // Default width
+            height: 1080, // Default height
+            data: frame_data,
             format: VideoCodec::H264,
             quality: config.quality.clone(),
-            data: frame_data,
-            display_id: "primary".to_string(),
+            compressed: false,
         })
     }
 }

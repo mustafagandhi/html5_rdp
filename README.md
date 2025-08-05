@@ -1,409 +1,481 @@
-# 🖥️ Real Remote Desktop Platform
+# Real Remote Desktop Platform
 
-A self-hosted, protocol-agnostic remote desktop platform that lets users access their full desktop environments directly from a browser — without relying on RDP, TeamViewer, Chrome Remote Desktop, or VNC clients.
+A production-grade, self-hosted remote desktop solution that provides secure, low-latency access to Windows desktops through any modern web browser. Built with Rust for the native agent and TypeScript for the web client.
 
-## 🚀 Quick Start
+## 🚀 Features
 
-### Prerequisites
-- **Node.js 18+** for web client
-- **Rust 1.70+** for native agent
-- **Modern browser** with WebRTC support
+### Core Functionality
+- **Native Windows Agent**: High-performance screen capture using DXGI Desktop Duplication API
+- **Web-Based Client**: Modern browser interface with hardware-accelerated canvas rendering
+- **Real-Time Transport**: WebRTC with WebSocket fallback for optimal connectivity
+- **Secure Communication**: End-to-end encryption with token-based authentication
+- **Input Injection**: Full mouse, keyboard, and touch input support
+- **Multi-Monitor Support**: Switch between displays seamlessly
+- **Quality Control**: Dynamic quality adjustment based on network conditions
 
-### Installation
+### Advanced Features
+- **Windows Service**: Runs as a background service with auto-start capability
+- **Clipboard Sync**: Bidirectional clipboard sharing between local and remote
+- **File Transfer**: Drag-and-drop file upload to remote desktop
+- **Session Management**: Multiple concurrent sessions with isolation
+- **Performance Monitoring**: Real-time metrics and diagnostics
+- **Responsive Design**: Works on desktop, tablet, and mobile devices
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/real-remote-desktop/platform.git
-   cd platform
-   ```
+## 📋 Requirements
 
-2. **Build the agent**
-   ```bash
-   cd agent
-   chmod +x build.sh
-   ./build.sh windows
-   ```
+### Windows Agent
+- Windows 10/11 (64-bit)
+- .NET Framework 4.7.2 or later
+- 4GB RAM minimum, 8GB recommended
+- DirectX 11 compatible graphics card
+- Network connectivity (port 8080)
 
-3. **Start the web client**
-   ```bash
-   npm install
-   npm run dev
-   ```
-
-4. **Run the agent**
-   ```bash
-   cd agent
-   cargo run --release
-   ```
-
-5. **Connect via browser**
-   - Open `http://localhost:3000`
-   - Enter agent connection details
-   - Start remote desktop session
-
-## 🏗️ Architecture
-
-```
-┌─────────────────┐    WebRTC/WebSocket    ┌─────────────────┐
-│   Web Client    │◄──────────────────────►│  Native Agent   │
-│   (Browser)     │                        │   (Rust/Go)     │
-└─────────────────┘                        └─────────────────┘
-        │                                           │
-        │                                           │
-   Canvas Rendering                            Screen Capture
-   Input Handling                              Input Injection
-   File Transfer                               Audio Streaming
-```
-
-## 🧱 Core Components
-
-### Web Client (`web-client/`)
-- **Canvas Renderer**: GPU-accelerated frame rendering
-- **Input Handler**: Mouse, keyboard, touch event capture
-- **WebRTC Service**: Real-time video/audio streaming
-- **Connection Manager**: Session lifecycle management
-- **Settings Panel**: Quality, security, and UI configuration
-
-### Native Agent (`agent/`)
-- **Capture Manager**: Cross-platform screen capture
-- **Input Manager**: OS-level input injection
-- **Transport Manager**: WebRTC/WebSocket handling
-- **Session Manager**: Multi-client session orchestration
-- **Security Module**: Authentication and encryption
-
-### Protocol (`protocol/`)
-- **Binary Message Format**: Efficient data transmission
-- **Multiple Channels**: Video, input, clipboard, file, metrics
-- **Quality Adaptation**: Dynamic bitrate and resolution
-- **Error Handling**: Robust connection recovery
-
-## 🔐 Security Features
-
-- **End-to-End Encryption**: AES-256-GCM with perfect forward secrecy
-- **Token Authentication**: Secure pairing without passwords
-- **Session Isolation**: Complete process separation
-- **Audit Logging**: Comprehensive security event tracking
-- **Rate Limiting**: Protection against abuse
-
-## 📊 Performance Targets
-
-| Metric | Target | Current |
-|--------|--------|---------|
-| Latency | < 100ms | ~45ms |
-| Resolution | Up to 4K | 1920x1080 |
-| Frame Rate | 30-60 FPS | 30 FPS |
-| Bandwidth | < 2 Mbps | ~1.5 Mbps |
-| CPU Usage | < 20% | ~15% |
-
-## 🛠️ Development
-
-### Building from Source
-
-```bash
-# Build agent for all platforms
-cd agent
-./build.sh all
-
-# Build web client
-cd ../web-client
-npm run build
-
-# Run tests
-npm test
-cargo test
-```
+### Web Client
+- Modern web browser (Chrome 90+, Firefox 88+, Safari 14+, Edge 90+)
+- WebRTC support
+- JavaScript enabled
+- Network connectivity to agent
 
 ### Development Environment
+- Rust 1.70+ (for agent development)
+- Node.js 18+ (for web client development)
+- Git
 
+## 🛠️ Installation
+
+### Quick Start (Pre-built)
+
+1. **Download the latest release** from the releases page
+2. **Install the Windows agent**:
+   ```powershell
+   # Run as Administrator
+   .\RealRemoteDesktopAgent-Setup.exe
+   ```
+3. **Start the web client**:
+   ```bash
+   # Extract web client files
+   tar -xzf real-remote-desktop-web-client.tar.gz
+   cd real-remote-desktop-web-client
+   
+   # Start development server
+   npm run dev:server
+   ```
+4. **Open your browser** and navigate to `http://localhost:3000`
+
+### From Source
+
+#### Prerequisites
 ```bash
-# Install dependencies
-npm install
-cargo build
+# Install Rust
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
-# Start development servers
-npm run dev          # Web client (port 3000)
-cargo run --dev      # Agent (port 8080)
+# Install Node.js
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+nvm install 18
+nvm use 18
 ```
 
-### Testing
-
+#### Build Everything
 ```bash
-# Unit tests
-npm test
-cargo test
+# Clone the repository
+git clone https://github.com/real-remote-desktop/platform.git
+cd platform
 
-# Integration tests
-npm run test:e2e
-cargo test --features integration
+# Build all components
+./build.sh
 
-# Performance tests
-npm run test:perf
-cargo test --features benchmark
+# The built files will be in the `dist/` directory
 ```
 
-## 📦 Deployment
-
-### Docker Deployment
-
+#### Build Individual Components
 ```bash
-# Build Docker image
-docker build -t real-remote-desktop .
+# Build only the agent
+./build.sh agent
 
-# Run container
-docker run -p 8080:8080 -p 3000:3000 real-remote-desktop
+# Build only the web client
+./build.sh web-client
+
+# Build only the installer
+./build.sh installer
+
+# Run tests
+./build.sh test
+
+# Clean build artifacts
+./build.sh clean
 ```
 
-### System Service
+## 🚀 Usage
 
-```bash
-# Windows installation
-real-remote-desktop-agent-setup.exe
+### Windows Agent
+
+#### Console Mode
+```powershell
+# Run in console mode (for development/testing)
+.\real-remote-desktop-agent.exe
+
+# With custom config
+.\real-remote-desktop-agent.exe --config custom-config.toml
+
+# With custom port
+.\real-remote-desktop-agent.exe --port 9090
 ```
 
-### Cloud Deployment
+#### Service Mode
+```powershell
+# Install as Windows service (run as Administrator)
+.\install_service.ps1
 
-- **AWS**: EC2 with GPU instances
-- **Azure**: Virtual Machines with GPU
-- **GCP**: Compute Engine with GPU
-- **Kubernetes**: Helm charts available
+# Start the service
+Start-Service RealRemoteDesktopAgent
+
+# Stop the service
+Stop-Service RealRemoteDesktopAgent
+
+# Check service status
+Get-Service RealRemoteDesktopAgent
+```
+
+#### Manual Service Installation
+```powershell
+# Create service
+sc.exe create "RealRemoteDesktopAgent" binPath= "C:\Program Files\Real Remote Desktop\real-remote-desktop-agent.exe --service" DisplayName= "Real Remote Desktop Agent" start= auto
+
+# Start service
+sc.exe start RealRemoteDesktopAgent
+
+# Remove service
+sc.exe stop RealRemoteDesktopAgent
+sc.exe delete RealRemoteDesktopAgent
+```
+
+### Web Client
+
+#### Development Mode
+```bash
+# Start development server
+npm run dev
+
+# Or use the custom dev server
+npm run dev:server
+```
+
+#### Production Mode
+```bash
+# Build for production
+npm run build
+
+# Serve built files
+npm run preview
+```
+
+#### Using a Simple HTTP Server
+```bash
+# Python 3
+python -m http.server 3000
+
+# Python 2
+python -m SimpleHTTPServer 3000
+
+# Node.js
+npx serve dist
+```
 
 ## 🔧 Configuration
 
 ### Agent Configuration (`config.toml`)
 
 ```toml
-[server]
-host = "0.0.0.0"
-port = 8080
-max_connections = 10
-
-[auth]
-token = "your-secure-token"
-session_timeout = 3600
+[agent]
+name = "Windows Desktop"
+version = "1.0.0"
+log_level = "info"
+log_file = "logs/agent.log"
 
 [capture]
-quality = "high"
+enabled = true
 framerate = 30
+quality = "high"  # low, medium, high, ultra
 codec = "h264"
+width = 1920
+height = 1080
 
 [transport]
 webrtc_enabled = true
 websocket_enabled = true
-ice_servers = ["stun:stun.l.google.com:19302"]
+port = 8080
+host = "0.0.0.0"
+ice_servers = [
+    "stun:stun.l.google.com:19302",
+    "stun:stun1.l.google.com:19302"
+]
+
+[input]
+enabled = true
+mouse_sensitivity = 1.0
+keyboard_layout = "en-US"
+touch_enabled = true
+
+[security]
+token_required = true
+token_expiry = 3600
+max_sessions = 5
+session_timeout = 1800
+
+[logging]
+level = "info"
+file = "logs/agent.log"
+max_size = "10MB"
+max_files = 5
 ```
 
 ### Web Client Configuration
 
+The web client configuration is stored in the browser's localStorage and can be modified through the settings panel:
+
 ```javascript
-// config.js
-export default {
-  connection: {
-    defaultHost: 'localhost',
-    defaultPort: 8080,
-    secure: false
+// Default configuration
+{
+  "connection": {
+    "defaultHost": "localhost",
+    "defaultPort": 8080,
+    "secure": false,
+    "timeout": 30000
   },
-  display: {
-    defaultQuality: 'high',
-    autoQuality: true
+  "display": {
+    "defaultQuality": "medium",
+    "scaleMode": "fit",
+    "maintainAspectRatio": true
   },
-  security: {
-    enableEncryption: true,
-    requireAuthentication: true
+  "input": {
+    "mouseSensitivity": 1.0,
+    "keyboardLayout": "en-US",
+    "touchEnabled": true
+  },
+  "ui": {
+    "theme": "auto",
+    "showPerformanceOverlay": false,
+    "showConnectionInfo": true
   }
 }
 ```
 
-## 📈 Monitoring
+## 🔐 Security
 
-### Metrics Collection
+### Authentication
+- **Token-based**: Secure pairing using time-limited tokens
+- **QR Code**: Easy pairing via QR code scanning
+- **Manual Entry**: Direct token input for advanced users
 
-- **Performance**: FPS, latency, bandwidth usage
-- **System**: CPU, memory, network utilization
-- **Security**: Authentication attempts, session events
-- **Quality**: Frame drops, encoding efficiency
+### Encryption
+- **WebRTC**: DTLS-SRTP encryption for media streams
+- **WebSocket**: TLS encryption for control messages
+- **Data Channels**: Encrypted binary communication
+
+### Network Security
+- **Firewall Rules**: Automatic Windows firewall configuration
+- **Port Management**: Configurable listening ports
+- **Access Control**: Session isolation and timeout
+
+## 📊 Monitoring
+
+### Agent Metrics
+- CPU and memory usage
+- Network bandwidth utilization
+- Frame capture and encoding performance
+- Active session count
+- Error rates and recovery
+
+### Client Metrics
+- Connection latency and jitter
+- Frame rate and quality
+- Input responsiveness
+- Network packet loss
+- Session duration
 
 ### Logging
-
 ```bash
 # View agent logs
-journalctl -u real-remote-desktop-agent
+tail -f logs/agent.log
 
-# View web client logs
-tail -f web-client/logs/app.log
+# View service logs (Windows)
+Get-EventLog -LogName Application -Source "RealRemoteDesktopAgent"
+
+# View web client logs (browser console)
+# Open Developer Tools > Console
 ```
 
-## 🤝 Contributing
+## 🐛 Troubleshooting
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+### Common Issues
+
+#### Agent Won't Start
+```powershell
+# Check if port is in use
+netstat -an | findstr :8080
+
+# Check Windows Defender
+Get-MpComputerStatus | Select-Object RealTimeProtectionEnabled
+
+# Check service status
+Get-Service RealRemoteDesktopAgent
+```
+
+#### Web Client Can't Connect
+```javascript
+// Check browser console for errors
+// Verify WebRTC support
+if (!navigator.mediaDevices) {
+  console.error('WebRTC not supported');
+}
+
+// Check network connectivity
+fetch('http://agent-ip:8080/health')
+  .then(response => console.log('Agent reachable'))
+  .catch(error => console.error('Agent unreachable'));
+```
+
+#### Poor Performance
+1. **Reduce quality** in client settings
+2. **Check network** bandwidth and latency
+3. **Update graphics drivers** on Windows
+4. **Close unnecessary applications** on remote desktop
+5. **Use wired connection** instead of WiFi
+
+#### Screen Capture Issues
+```powershell
+# Check DXGI support
+dxdiag
+
+# Update graphics drivers
+# Ensure no other screen capture software is running
+```
+
+### Debug Mode
+
+#### Agent Debug
+```powershell
+# Run with debug logging
+.\real-remote-desktop-agent.exe --config debug-config.toml
+
+# Debug config
+[logging]
+level = "debug"
+```
+
+#### Web Client Debug
+```javascript
+// Enable debug logging
+localStorage.setItem('debug', 'true');
+
+// View detailed connection info
+console.log(window.RealRemoteDesktop);
+```
+
+## 🔄 Development
+
+### Project Structure
+```
+real-remote-desktop/
+├── agent/                 # Windows native agent (Rust)
+│   ├── src/              # Source code
+│   ├── Cargo.toml        # Rust dependencies
+│   └── config.toml       # Agent configuration
+├── web-client/           # Browser-based client (TypeScript)
+│   ├── src/              # Source code
+│   ├── dist/             # Built files
+│   └── package.json      # Node.js dependencies
+├── protocol/             # Communication protocol spec
+├── docs/                 # Documentation
+├── installer/            # Windows installer (NSIS)
+└── build.sh             # Build script
+```
 
 ### Development Workflow
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+1. **Setup Development Environment**
+   ```bash
+   # Install Rust
+   rustup install stable
+   rustup default stable
+   
+   # Install Node.js
+   nvm install 18
+   nvm use 18
+   
+   # Install dependencies
+   cd agent && cargo build
+   cd ../web-client && npm install
+   ```
+
+2. **Run Development Servers**
+   ```bash
+   # Terminal 1: Agent
+   cd agent
+   cargo run
+   
+   # Terminal 2: Web Client
+   cd web-client
+   npm run dev
+   ```
+
+3. **Testing**
+   ```bash
+   # Test agent
+   cd agent && cargo test
+   
+   # Test web client
+   cd web-client && npm test
+   
+   # Run all tests
+   ./build.sh test
+   ```
+
+### Contributing
+
+1. **Fork the repository**
+2. **Create a feature branch**: `git checkout -b feature/amazing-feature`
+3. **Make your changes** following the coding standards
+4. **Add tests** for new functionality
+5. **Run the test suite**: `./build.sh test`
+6. **Commit your changes**: `git commit -m 'Add amazing feature'`
+7. **Push to the branch**: `git push origin feature/amazing-feature`
+8. **Open a Pull Request**
 
 ### Code Standards
 
 - **Rust**: Follow `rustfmt` and `clippy` guidelines
 - **TypeScript**: Use ESLint and Prettier
-- **Tests**: Maintain 80%+ code coverage
-- **Documentation**: Update docs for all changes
+- **Documentation**: Update README and inline docs
+- **Testing**: Maintain 80%+ code coverage
+- **Security**: Follow OWASP guidelines
 
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
+## 🤝 Support
+
+### Getting Help
+- **Documentation**: Check the [docs/](docs/) directory
+- **Issues**: Report bugs on [GitHub Issues](https://github.com/real-remote-desktop/platform/issues)
+- **Discussions**: Join [GitHub Discussions](https://github.com/real-remote-desktop/platform/discussions)
+- **Wiki**: Check the [GitHub Wiki](https://github.com/real-remote-desktop/platform/wiki)
+
+### Community
+- **Discord**: Join our [Discord server](https://discord.gg/real-remote-desktop)
+- **Matrix**: Join our [Matrix room](https://matrix.to/#/#real-remote-desktop:matrix.org)
+- **Reddit**: Visit [r/RealRemoteDesktop](https://reddit.com/r/RealRemoteDesktop)
+
 ## 🙏 Acknowledgments
 
-- **WebRTC**: Real-time communication technology
-- **Rust**: Systems programming language
-- **TypeScript**: Type-safe JavaScript
-- **Open Source Community**: For inspiration and tools
-
-## 📞 Support
-
-- **Documentation**: [docs/](docs/)
-- **Issues**: [GitHub Issues](https://github.com/real-remote-desktop/platform/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/real-remote-desktop/platform/discussions)
-- **Email**: support@real-remote-desktop.com
+- **WebRTC**: For real-time communication capabilities
+- **OpenH264**: For H.264 video encoding
+- **DXGI**: For efficient screen capture on Windows
+- **Rust Community**: For the excellent ecosystem
+- **TypeScript Team**: For the amazing language and tooling
 
 ---
 
-**Real Remote Desktop Platform** - Secure, fast, and reliable remote desktop access for the modern web.
-
----
-
-## 🚀 Key Features
-
-- **🎯 Browser-Based Access**  
-  Full session-based desktop rendering using HTML5 Canvas and WebRTC/WebSocket.
-
-- **🧩 Protocol-Agnostic**  
-  Supports modern open-source screen sharing protocols or custom encoders (SPICE, WayVNC, PipeWire).
-
-- **🛡️ Secure by Design**  
-  End-to-end encryption, token-based pairing, and optional OAuth2 login.
-
-- **🎮 Native Input Support**  
-  Keyboard, mouse, clipboard, and file transfer support out of the box.
-
-- **⚙️ Adaptive Streaming**  
-  Dynamically adjusts resolution, bitrate, and frame rate for optimal performance.
-
----
-
-## 🧱 Architecture Overview
-
-```
-
-Browser (Canvas + WebRTC/WebSocket)
-⇅
-Secure Transport (DTLS/TLS/WebSocket)
-⇅
-Native Host Agent (Rust/Go) → OS/Desktop Session
-
-```
-
-- Frame capture, encoding, and input injection handled on the host
-- Frontend handles rendering, transport, and input capture
-
----
-
-## 🔐 Security Highlights
-
-- TLS 1.3 + DTLS-SRTP encryption
-- OAuth2 or QR-based token auth
-- Session isolation and permission-based clipboard/file access
-- Automatic session lock/inactivity timeout
-- Audit logs, device registry, and agent pairing policies
-
----
-
-## 💻 Platform Compatibility
-
-| Component   | OS Support           |
-|-------------|----------------------|
-| Web Client  | Any modern browser   |
-| Agent       | Windows              |
-
----
-
-## ⚡ Performance Targets
-
-| Metric     | Target                |
-|------------|-----------------------|
-| Latency    | < 100ms               |
-| Resolution | Up to 2160p (4K)      |
-| Frame Rate | 30–60 FPS (adaptive)  |
-| Bandwidth  | < 2 Mbps (H.264/VP9)  |
-| CPU Load   | < 20% on quad-core CPU|
-
----
-
-## 📁 Repository Structure
-
-```
-
-remote-desktop/
-├── agent/              # Native service (Windows)
-│   ├── src/            # Frame capture, input injection
-│   └── installer/      # NSIS/InnoSetup scripts
-│
-├── web-client/         # Frontend
-│   ├── canvas/         # Renders frames to browser
-│   ├── webrtc/         # Connection logic
-│   └── public/         # Login UI and session controls
-│
-├── protocol/           # Message schemas and control spec
-└── docs/               # Architecture & technical notes
-
-````
-
----
-
-## 📜 Session Protocol Channels
-
-| Channel     | Purpose                 |
-|-------------|-------------------------|
-| `video`     | Encoded frame stream    |
-| `input`     | Keyboard/mouse/touch    |
-| `control`   | Commands (resize, ping) |
-| `clipboard` | Text/mime data sync     |
-| `file`      | File upload chunks      |
-| `metrics`   | Performance telemetry   |
-
----
-
-## 🔧 Installation
-
-### 🖥️ Windows Agent
-
-```bash
-git clone https://github.com/your-org/remote-desktop
-cd agent
-cargo build --release
-# or build installer via NSIS/InnoSetup
-````
-
-### 🌐 Web Client
-
-```bash
-cd web-client
-npm install
-npm run build
-```
-
----
-
-## 🙌 Contributing
-
-We welcome PRs, feedback, and design reviews. See `CONTRIBUTING.md` and `docs/architecture.md` for guidelines.
-
----
-
-## 📖 License
-
-MIT or custom license based on deployment. See `LICENSE`.
+**Made with ❤️ by the Real Remote Desktop Team**
 

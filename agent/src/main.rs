@@ -6,9 +6,11 @@ use tracing_subscriber;
 mod agent;
 mod capture;
 mod config;
+mod encoder;
 mod error;
 mod input;
 mod logging;
+mod service;
 mod transport;
 mod types;
 mod utils;
@@ -16,6 +18,7 @@ mod utils;
 use agent::Agent;
 use config::Config;
 use error::AgentResult;
+use service::WindowsService;
 
 #[tokio::main]
 async fn main() -> AgentResult<()> {
@@ -45,32 +48,46 @@ async fn main() -> AgentResult<()> {
                 .help("Port to listen on")
                 .default_value("8080")
         )
+        .arg(
+            Arg::new("service")
+                .short('s')
+                .long("service")
+                .help("Run as Windows service")
+        )
         .get_matches();
     
-    // Load configuration
-    let config_path = matches.get_one::<String>("config").unwrap();
-    let config = Config::load(config_path)?;
+    // Check if running as service
+    let is_service = matches.get_flag("service");
     
-    info!("Configuration loaded from: {}", config_path);
-    
-    // Create and start agent
-    let mut agent = Agent::new(config).await?;
-    
-    // Handle shutdown gracefully
-    let shutdown_signal = tokio::signal::ctrl_c();
-    
-    tokio::select! {
-        _ = agent.start() => {
-            info!("Agent started successfully");
+    if is_service {
+        // Run as Windows service
+        WindowsService::run()?;
+    } else {
+        // Run as console application
+        let config_path = matches.get_one::<String>("config").unwrap();
+        let config = Config::load(config_path)?;
+        
+        info!("Configuration loaded from: {}", config_path);
+        
+        // Create and start agent
+        let mut agent = Agent::new(config).await?;
+        
+        // Handle shutdown gracefully
+        let shutdown_signal = tokio::signal::ctrl_c();
+        
+        tokio::select! {
+            _ = agent.start() => {
+                info!("Agent started successfully");
+            }
+            _ = shutdown_signal => {
+                info!("Received shutdown signal");
+            }
         }
-        _ = shutdown_signal => {
-            info!("Received shutdown signal");
-        }
+        
+        // Stop agent gracefully
+        agent.stop().await?;
+        info!("Agent stopped successfully");
     }
-    
-    // Stop agent gracefully
-    agent.stop().await?;
-    info!("Agent stopped successfully");
     
     Ok(())
 } 

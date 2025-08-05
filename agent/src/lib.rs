@@ -1,6 +1,7 @@
 pub mod agent;
 pub mod capture;
 pub mod config;
+pub mod encoder;
 pub mod error;
 pub mod input;
 pub mod logging;

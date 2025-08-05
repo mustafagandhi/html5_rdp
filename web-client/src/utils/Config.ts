@@ -1,3 +1,5 @@
+import { Logger } from './Logger';
+
 export interface AppConfig {
   // Connection settings
   connection: {
@@ -73,17 +75,17 @@ export interface AppConfig {
 export class Config {
   private static instance: Config;
   private config: AppConfig;
-  private logger = new (await import('./Logger')).Logger('Config');
-
-  private constructor() {
-    this.config = this.getDefaultConfig();
-    this.loadUserPreferences();
-  }
+  private logger = new Logger('Config');
 
   static init(): void {
     if (!Config.instance) {
       Config.instance = new Config();
     }
+  }
+
+  private constructor() {
+    this.config = this.getDefaultConfig();
+    this.loadUserPreferences();
   }
 
   static getInstance(): Config {

@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "vite",
+    "dev:server": "node web-client/dev-server.js",
     "build": "vite build",
     "preview": "vite preview",
     "test": "jest",
@@ -15,20 +16,20 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "webrtc-adapter": "^8.2.3",
+    "dayjs": "^1.11.9",
+    "js-cookie": "^3.0.5",
+    "lodash-es": "^4.17.21",
+    "qrcode": "^1.5.3",
     "simple-peer": "^9.11.1",
     "socket.io-client": "^4.7.2",
     "uuid": "^9.0.0",
-    "qrcode": "^1.5.3",
-    "js-cookie": "^3.0.5",
-    "dayjs": "^1.11.9",
-    "lodash-es": "^4.17.21"
+    "webrtc-adapter": "^8.2.3"
   },
   "devDependencies": {
-    "@types/webrtc": "^0.0.40",
-    "@types/uuid": "^9.0.6",
     "@types/js-cookie": "^3.0.6",
     "@types/lodash-es": "^4.17.9",
+    "@types/uuid": "^9.0.6",
+    "@types/webrtc": "^0.0.40",
     "@typescript-eslint/eslint-plugin": "^6.7.0",
     "@typescript-eslint/parser": "^6.7.0",
     "@vitejs/plugin-react": "^4.0.4",
@@ -39,6 +40,7 @@
     "eslint-plugin-prettier": "^5.0.0",
     "jest": "^29.7.0",
     "prettier": "^3.0.3",
+    "terser": "^5.43.1",
     "typescript": "^5.2.2",
     "vite": "^4.4.9",
     "vitest": "^0.34.3"
@@ -54,4 +56,4 @@
   ],
   "author": "Real Remote Desktop Team",
   "license": "MIT"
-} 
+}
