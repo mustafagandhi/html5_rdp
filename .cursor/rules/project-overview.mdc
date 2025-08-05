@@ -5,7 +5,7 @@ alwaysApply: true
 
 ## 📘 Project Description
 
-This project is a self-hosted, browser-based Remote Desktop solution designed to connect securely to full session-based desktop environments (Windows/Linux/MacOS) without relying on Microsoft’s RDP protocol. It uses open or custom protocols and provides an experience similar to Google Remote Desktop or AnyDesk, but fully customizable, scalable, and enterprise-ready.
+This project is a self-hosted, browser-based Remote Desktop solution designed to connect securely to full session-based desktop environments (Windows) without relying on Microsoft’s RDP protocol. It uses open or custom protocols and provides an experience similar to Google Remote Desktop or AnyDesk, but fully customizable, scalable, and enterprise-ready.
 
 ---
 
@@ -20,7 +20,7 @@ This project is a self-hosted, browser-based Remote Desktop solution designed to
 
 ### 2. Native Host Agent
 
-* Cross-platform agent (Windows, Linux or MacOS) for frame capture, input injection, and transport
+* Cross-platform agent (Windows) for frame capture, input injection, and transport
 * Built in Rust or Go for performance and safety
 * Operates as a service with optional tray UI
 * Supports hardware-accelerated capture and encoding (e.g., H.264)
@@ -68,14 +68,14 @@ This project is a self-hosted, browser-based Remote Desktop solution designed to
 ### Backend (Native Agent)
 
 * Rust or Go
-* Screen capture APIs: DXGI (Windows), PipeWire (Linux)
+* Screen capture APIs: DXGI (Windows)
 * Input injection: `SendInput`, `uinput`, `libinput`
 * Encoding: FFmpeg, GStreamer, WebCodec API
 * Transport: WebRTC, QUIC, TLS
 
 ### DevOps & Packaging
 
-* Installer: NSIS / Inno Setup / WiX Toolset (Windows), `.deb`/`.rpm` (Linux or MacOS)
+* Installer: NSIS / Inno Setup / WiX Toolset (Windows)
 
 ---
 

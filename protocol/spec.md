@@ -2,225 +2,125 @@
 
 ## Overview
 
-This document defines the communication protocol used by the Real Remote Desktop system. The protocol supports both WebRTC and WebSocket transport layers with a unified message format.
+The Real Remote Desktop Protocol (RRDP) is a binary protocol designed for efficient, low-latency remote desktop communication between web clients and native agents. It supports multiple transport layers including WebRTC and WebSocket, with built-in encryption and compression.
 
 ## Protocol Version
 
-- **Version**: 1.0.0
-- **Date**: 2024
-- **Status**: Production Ready
+Current version: `1.0.0`
 
 ## Transport Layers
 
-### 1. WebRTC Transport
+### WebRTC Transport
+- Uses WebRTC Data Channels for reliable message delivery
+- Supports multiple data channels for different message types
+- Automatic reconnection and connection state management
+- ICE/STUN/TURN support for NAT traversal
 
-WebRTC is the primary transport mechanism, providing:
-- Low-latency UDP-based communication
-- NAT traversal via STUN/TURN servers
-- Built-in encryption (DTLS-SRTP)
-- Data channels for control messages
-
-### 2. WebSocket Transport
-
-WebSocket serves as a fallback transport, providing:
-- TCP-based reliable communication
-- TLS encryption
-- Firewall-friendly operation
-- Automatic reconnection
+### WebSocket Transport
+- Fallback transport for environments without WebRTC support
+- Binary message format for efficiency
+- TLS encryption for security
+- Automatic reconnection with exponential backoff
 
 ## Message Format
 
-All messages follow a unified JSON format:
+### Binary Message Structure
 
-```json
-{
-  "type": "message_type",
-  "channel": "channel_name",
-  "data": {},
-  "timestamp": 1234567890,
-  "sequence": 1,
-  "version": "1.0.0"
-}
+```
++--------+--------+--------+--------+--------+--------+--------+--------+
+| Version|  Type  | Channel| Length | Sequence| Timestamp|    Data     |
+|  (1B)  |  (1B)  |  (1B)  |  (4B)  |  (4B)  |   (8B)  |   (N bytes) |
++--------+--------+--------+--------+--------+--------+--------+--------+
 ```
 
-### Message Fields
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `type` | string | Yes | Message type identifier |
-| `channel` | string | Yes | Channel name (control, video, input, etc.) |
-| `data` | object | Yes | Message payload |
-| `timestamp` | number | Yes | Unix timestamp in milliseconds |
-| `sequence` | number | No | Sequence number for ordering |
-| `version` | string | Yes | Protocol version |
-
-## Message Channels
-
-### 1. Control Channel (`control`)
-
-Handles connection management, authentication, and system control.
-
-#### Message Types
-
-##### `auth`
-Authentication request/response.
+### JSON Message Structure (for control messages)
 
 ```json
 {
-  "type": "auth",
-  "channel": "control",
+  "version": "1.0.0",
+  "type": "control",
+  "channel": "session",
+  "sequence": 12345,
+  "timestamp": 1640995200000,
   "data": {
-    "action": "request|response|success|failed",
-    "token": "auth_token",
-    "clientId": "client_identifier",
+    "action": "connect",
+    "session_id": "uuid-string",
     "capabilities": {
       "video": true,
-      "audio": false,
+      "audio": true,
       "clipboard": true,
-      "fileTransfer": false
+      "file_transfer": true,
+      "touch": true,
+      "multi_monitor": true
     }
   }
 }
 ```
 
-##### `connect`
-Connection establishment.
+## Message Types
 
+### 1. Control Messages (`control`)
+
+#### Connection Management
+- `connect` - Establish new session
+- `disconnect` - Terminate session
+- `reconnect` - Reestablish connection
+- `heartbeat` - Keep-alive ping
+- `capabilities` - Exchange client/agent capabilities
+
+#### Session Management
+- `session_start` - Begin new session
+- `session_end` - End current session
+- `session_pause` - Pause session
+- `session_resume` - Resume session
+- `session_timeout` - Session timeout notification
+
+#### Quality Control
+- `quality_change` - Request quality change
+- `framerate_change` - Request framerate change
+- `resolution_change` - Request resolution change
+
+### 2. Video Messages (`video`)
+
+#### Frame Data
 ```json
 {
-  "type": "connect",
-  "channel": "control",
-  "data": {
-    "action": "request|response|success|failed",
-    "sessionId": "session_identifier",
-    "quality": "low|medium|high|ultra",
-    "resolution": {
-      "width": 1920,
-      "height": 1080
-    },
-    "framerate": 30
-  }
-}
-```
-
-##### `disconnect`
-Connection termination.
-
-```json
-{
-  "type": "disconnect",
-  "channel": "control",
-  "data": {
-    "action": "request|response",
-    "reason": "user_request|timeout|error",
-    "sessionId": "session_identifier"
-  }
-}
-```
-
-##### `heartbeat`
-Connection health monitoring.
-
-```json
-{
-  "type": "heartbeat",
-  "channel": "control",
-  "data": {
-    "timestamp": 1234567890,
-    "sessionId": "session_identifier"
-  }
-}
-```
-
-##### `resize`
-Display resize request.
-
-```json
-{
-  "type": "resize",
-  "channel": "control",
-  "data": {
-    "width": 1920,
-    "height": 1080,
-    "quality": "low|medium|high|ultra"
-  }
-}
-```
-
-##### `quality-change`
-Quality adjustment.
-
-```json
-{
-  "type": "quality-change",
-  "channel": "control",
-  "data": {
-    "quality": "low|medium|high|ultra",
-    "reason": "auto|manual|performance"
-  }
-}
-```
-
-### 2. Video Channel (`video`)
-
-Handles video frame transmission.
-
-#### Message Types
-
-##### `frame`
-Video frame data.
-
-```json
-{
-  "type": "frame",
+  "type": "video",
   "channel": "video",
   "data": {
-    "frameId": "frame_identifier",
-    "timestamp": 1234567890,
+    "frame_id": "uuid",
+    "timestamp": 1640995200000,
     "width": 1920,
     "height": 1080,
-    "format": "h264|vp8|vp9|av1",
-    "quality": "low|medium|high|ultra",
-    "data": "base64_encoded_frame_data",
-    "compression": "gzip|brotli|none"
+    "format": "h264",
+    "quality": "high",
+    "compressed": true,
+    "data": "base64-encoded-frame-data"
   }
 }
 ```
 
-##### `frame-request`
-Request for specific frame.
+#### Video Control
+- `video_start` - Start video stream
+- `video_stop` - Stop video stream
+- `video_pause` - Pause video stream
+- `video_resume` - Resume video stream
 
+### 3. Input Messages (`input`)
+
+#### Mouse Events
 ```json
 {
-  "type": "frame-request",
-  "channel": "video",
-  "data": {
-    "frameId": "frame_identifier",
-    "quality": "low|medium|high|ultra"
-  }
-}
-```
-
-### 3. Input Channel (`input`)
-
-Handles user input events.
-
-#### Message Types
-
-##### `mouse`
-Mouse input event.
-
-```json
-{
-  "type": "mouse",
+  "type": "input",
   "channel": "input",
   "data": {
-    "action": "mousedown|mouseup|mousemove|click|dblclick|contextmenu|wheel",
-    "button": 0|1|2,
-    "x": 0.5,
-    "y": 0.5,
-    "deltaX": 0,
-    "deltaY": 0,
+    "event_type": "mouse",
+    "action": "mousemove",
+    "x": 100.5,
+    "y": 200.3,
+    "button": 1,
+    "delta_x": 10.0,
+    "delta_y": 20.0,
     "modifiers": {
       "ctrl": false,
       "alt": false,
@@ -231,156 +131,126 @@ Mouse input event.
 }
 ```
 
-##### `keyboard`
-Keyboard input event.
-
+#### Keyboard Events
 ```json
 {
-  "type": "keyboard",
+  "type": "input",
   "channel": "input",
   "data": {
-    "action": "keydown|keyup|keypress",
+    "event_type": "keyboard",
+    "action": "keydown",
     "key": "a",
-    "keyCode": 65,
+    "key_code": 65,
     "code": "KeyA",
+    "repeat": false,
     "modifiers": {
       "ctrl": false,
       "alt": false,
       "shift": false,
       "meta": false
-    },
-    "repeat": false
+    }
   }
 }
 ```
 
-##### `touch`
-Touch input event.
-
+#### Touch Events
 ```json
 {
-  "type": "touch",
+  "type": "input",
   "channel": "input",
   "data": {
-    "action": "touchstart|touchend|touchmove",
+    "event_type": "touch",
+    "action": "touchstart",
     "touches": [
       {
         "id": 1,
-        "x": 0.5,
-        "y": 0.5,
+        "x": 100.0,
+        "y": 200.0,
         "pressure": 1.0
       }
     ],
-    "changedTouches": [
-      {
-        "id": 1,
-        "x": 0.5,
-        "y": 0.5,
-        "pressure": 1.0
-      }
-    ]
+    "changed_touches": [...]
   }
 }
 ```
 
-### 4. Clipboard Channel (`clipboard`)
-
-Handles clipboard synchronization.
-
-#### Message Types
-
-##### `clipboard-data`
-Clipboard content.
-
+#### Wheel Events
 ```json
 {
-  "type": "clipboard-data",
+  "type": "input",
+  "channel": "input",
+  "data": {
+    "event_type": "wheel",
+    "delta_x": 0.0,
+    "delta_y": 120.0,
+    "delta_z": 0.0,
+    "delta_mode": 0,
+    "x": 100.0,
+    "y": 200.0,
+    "modifiers": {...}
+  }
+}
+```
+
+### 4. Clipboard Messages (`clipboard`)
+
+#### Clipboard Data
+```json
+{
+  "type": "clipboard",
   "channel": "clipboard",
   "data": {
-    "format": "text|html|image",
-    "content": "clipboard_content",
-    "encoding": "utf8|base64"
+    "format": "text",
+    "content": "clipboard text content",
+    "encoding": "utf-8",
+    "direction": "to_agent"
   }
 }
 ```
 
-##### `clipboard-request`
-Request for clipboard content.
+#### Clipboard Control
+- `clipboard_request` - Request clipboard content
+- `clipboard_clear` - Clear clipboard
+- `clipboard_formats` - List available formats
 
+### 5. File Transfer Messages (`file`)
+
+#### File Transfer Control
 ```json
 {
-  "type": "clipboard-request",
-  "channel": "clipboard",
-  "data": {
-    "format": "text|html|image"
-  }
-}
-```
-
-### 5. File Channel (`file`)
-
-Handles file transfer operations.
-
-#### Message Types
-
-##### `file-transfer-start`
-Initiate file transfer.
-
-```json
-{
-  "type": "file-transfer-start",
+  "type": "file",
   "channel": "file",
   "data": {
-    "fileId": "file_identifier",
-    "filename": "example.txt",
-    "size": 1024,
-    "checksum": "sha256_hash",
-    "direction": "upload|download"
+    "action": "upload_start",
+    "file_id": "uuid",
+    "filename": "document.pdf",
+    "size": 1048576,
+    "checksum": "sha256-hash",
+    "chunk_size": 65536,
+    "total_chunks": 16
   }
 }
 ```
 
-##### `file-chunk`
-File data chunk.
-
+#### File Chunk Data
 ```json
 {
-  "type": "file-chunk",
+  "type": "file",
   "channel": "file",
   "data": {
-    "fileId": "file_identifier",
-    "chunkIndex": 0,
-    "totalChunks": 10,
-    "data": "base64_encoded_chunk",
-    "checksum": "chunk_checksum"
+    "action": "upload_chunk",
+    "file_id": "uuid",
+    "chunk_index": 5,
+    "total_chunks": 16,
+    "data": "base64-encoded-chunk",
+    "checksum": "sha256-hash"
   }
 }
 ```
 
-##### `file-transfer-complete`
-File transfer completion.
+### 6. Metrics Messages (`metrics`)
 
-```json
-{
-  "type": "file-transfer-complete",
-  "channel": "file",
-  "data": {
-    "fileId": "file_identifier",
-    "success": true,
-    "error": null
-  }
-}
-```
-
-### 6. Metrics Channel (`metrics`)
-
-Handles performance and connection metrics.
-
-#### Message Types
-
-##### `metrics`
-Performance metrics.
-
+#### Performance Metrics
 ```json
 {
   "type": "metrics",
@@ -388,189 +258,159 @@ Performance metrics.
   "data": {
     "fps": 30.5,
     "latency": 45,
-    "bitrate": 2000000,
-    "packetLoss": 0.1,
+    "bitrate": 2048000,
+    "packet_loss": 0.1,
     "jitter": 5.2,
-    "frameDrops": 2,
-    "bytesReceived": 1048576,
-    "bytesSent": 524288,
-    "cpuUsage": 15.5,
-    "memoryUsage": 268435456
+    "frame_drops": 2,
+    "bytes_received": 1048576,
+    "bytes_sent": 2097152,
+    "cpu_usage": 15.3,
+    "memory_usage": 268435456
   }
 }
 ```
 
+## Connection Lifecycle
+
+### 1. Handshake Phase
+1. Client sends `connect` message with capabilities
+2. Agent responds with `connect_ack` and agent capabilities
+3. Both parties establish encryption keys
+4. Session is created with unique session ID
+
+### 2. Session Phase
+1. Video stream starts automatically
+2. Input events are processed in real-time
+3. Metrics are exchanged periodically
+4. Heartbeats maintain connection health
+
+### 3. Disconnection Phase
+1. Either party can initiate `disconnect`
+2. All active transfers are completed
+3. Session is cleaned up
+4. Connection is closed gracefully
+
+## Security
+
+### Encryption
+- All messages are encrypted using AES-256-GCM
+- Keys are derived using ECDH key exchange
+- Perfect forward secrecy is maintained
+- Message authentication using HMAC-SHA256
+
+### Authentication
+- Token-based authentication for initial connection
+- Session tokens for ongoing communication
+- Optional certificate-based authentication
+- Rate limiting to prevent abuse
+
 ## Error Handling
 
 ### Error Message Format
-
 ```json
 {
   "type": "error",
   "channel": "control",
   "data": {
-    "code": "ERROR_CODE",
-    "message": "Human readable error message",
-    "details": {},
-    "recoverable": true
+    "error_code": 1001,
+    "error_message": "Invalid session ID",
+    "recoverable": true,
+    "suggested_action": "reconnect"
   }
 }
 ```
 
-### Error Codes
+### Common Error Codes
+- `1000` - General error
+- `1001` - Invalid session ID
+- `1002` - Authentication failed
+- `1003` - Unsupported capability
+- `1004` - Resource unavailable
+- `1005` - Network timeout
+- `1006` - Protocol version mismatch
+- `1007` - Rate limit exceeded
 
-| Code | Description | Recoverable |
-|------|-------------|-------------|
-| `AUTH_FAILED` | Authentication failed | No |
-| `INVALID_TOKEN` | Invalid authentication token | No |
-| `SESSION_EXPIRED` | Session has expired | Yes |
-| `CONNECTION_TIMEOUT` | Connection timeout | Yes |
-| `QUALITY_NOT_SUPPORTED` | Requested quality not supported | Yes |
-| `INPUT_NOT_SUPPORTED` | Input type not supported | Yes |
-| `FILE_TOO_LARGE` | File exceeds size limit | No |
-| `INSUFFICIENT_BANDWIDTH` | Insufficient bandwidth | Yes |
-| `ENCODING_ERROR` | Video encoding error | Yes |
-| `DECODING_ERROR` | Video decoding error | Yes |
-
-## Security
-
-### Authentication
-
-1. **Token-based**: Clients authenticate using pre-shared tokens
-2. **Session-based**: Each connection creates a unique session
-3. **Time-limited**: Sessions expire after configurable timeout
-
-### Encryption
-
-1. **WebRTC**: DTLS-SRTP for media, DTLS for data channels
-2. **WebSocket**: TLS 1.3 encryption
-3. **Message-level**: Optional additional encryption for sensitive data
-
-### Access Control
-
-1. **Role-based**: Different permission levels for users
-2. **Feature-based**: Granular control over features (clipboard, file transfer)
-3. **Audit logging**: All actions logged for security compliance
-
-## Performance Considerations
-
-### Quality Levels
-
-| Level | Resolution | Framerate | Bitrate | Use Case |
-|-------|------------|-----------|---------|----------|
-| Low | 640x480 | 15 fps | 500 Kbps | Slow connections |
-| Medium | 1280x720 | 30 fps | 2 Mbps | Standard usage |
-| High | 1920x1080 | 60 fps | 5 Mbps | High-quality |
-| Ultra | 2560x1440 | 60 fps | 10 Mbps | Professional |
+## Quality of Service
 
 ### Adaptive Quality
+- Automatic quality adjustment based on network conditions
+- Frame rate scaling from 1-60 FPS
+- Resolution scaling from 320x240 to 4K
+- Bitrate adaptation from 100 Kbps to 10 Mbps
 
-The system automatically adjusts quality based on:
-- Network latency
-- Packet loss rate
-- Available bandwidth
-- Client performance
+### Priority Levels
+1. **Critical** - Control messages, authentication
+2. **High** - Input events, clipboard
+3. **Medium** - Video frames, metrics
+4. **Low** - File transfers, bulk data
 
-### Compression
+## Compression
 
-- **Video**: H.264/VP8/VP9/AV1 with hardware acceleration
-- **Data**: Gzip/Brotli compression for control messages
-- **Images**: WebP/JPEG for clipboard images
+### Message Compression
+- LZ4 compression for control messages
+- Brotli compression for file transfers
+- No compression for video frames (already compressed)
 
-## Implementation Guidelines
+### Video Compression
+- H.264 baseline profile for compatibility
+- VP8/VP9 for better compression
+- AV1 for future compatibility
+- Hardware acceleration when available
 
-### Client Implementation
+## Extensions
 
-1. **Connection Management**
-   - Implement automatic reconnection
-   - Handle connection state changes
-   - Monitor connection health
+### Plugin System
+- Custom message types can be registered
+- Plugin capabilities are exchanged during handshake
+- Versioned plugin interfaces
 
-2. **Message Handling**
-   - Validate all incoming messages
-   - Handle errors gracefully
-   - Implement message queuing for reliability
+### Custom Channels
+- Applications can define custom channels
+- Channel registration during connection
+- Namespace separation for custom channels
 
-3. **Performance Optimization**
-   - Use Web Workers for heavy processing
-   - Implement efficient frame rendering
-   - Optimize input event handling
+## Implementation Notes
 
-### Server Implementation
+### WebRTC Implementation
+- Use WebRTC Data Channels for reliable delivery
+- Implement connection state monitoring
+- Handle ICE candidate exchange
+- Support for TURN servers
 
-1. **Session Management**
-   - Track active sessions
-   - Implement session cleanup
-   - Handle multiple concurrent connections
+### WebSocket Implementation
+- Binary WebSocket messages for efficiency
+- Implement reconnection logic
+- Handle connection state changes
+- Support for TLS encryption
 
-2. **Resource Management**
-   - Limit concurrent connections
-   - Implement bandwidth throttling
-   - Monitor system resources
+### Performance Considerations
+- Use binary message format for efficiency
+- Implement message batching for input events
+- Use efficient serialization (MessagePack, CBOR)
+- Minimize memory allocations
 
-3. **Security**
-   - Validate all authentication tokens
-   - Implement rate limiting
-   - Log all security events
+## Versioning
+
+### Protocol Versioning
+- Major version changes require new client/agent versions
+- Minor version changes are backward compatible
+- Patch versions are fully compatible
+
+### Capability Negotiation
+- Clients and agents exchange supported features
+- Graceful degradation for unsupported features
+- Feature detection and fallback mechanisms
 
 ## Testing
 
-### Test Scenarios
+### Protocol Compliance
+- Automated protocol compliance testing
+- Message format validation
+- Error handling verification
+- Performance benchmarking
 
-1. **Connection Tests**
-   - Successful connection establishment
-   - Authentication failure handling
-   - Reconnection after disconnection
-
-2. **Performance Tests**
-   - Frame rate under various conditions
-   - Latency measurement
-   - Bandwidth utilization
-
-3. **Security Tests**
-   - Token validation
-   - Session timeout
-   - Access control enforcement
-
-4. **Error Handling Tests**
-   - Network interruption
-   - Invalid message handling
-   - Resource exhaustion
-
-## Version Compatibility
-
-### Backward Compatibility
-
-- Protocol version 1.0.x maintains backward compatibility
-- New optional fields can be added without breaking existing clients
-- Deprecated features are marked but not removed immediately
-
-### Migration Strategy
-
-1. **Client Updates**: Gradual rollout with feature flags
-2. **Server Updates**: Blue-green deployment
-3. **Protocol Updates**: Version negotiation during handshake
-
-## Future Extensions
-
-### Planned Features
-
-1. **Audio Support**: Real-time audio streaming
-2. **Multi-monitor**: Support for multiple displays
-3. **File Sync**: Real-time file synchronization
-4. **Mobile Support**: Touch-optimized interface
-5. **VR/AR**: Virtual and augmented reality support
-
-### Extension Points
-
-1. **Custom Codecs**: Plugin system for video codecs
-2. **Custom Protocols**: Support for alternative transport layers
-3. **Custom Features**: Plugin system for additional functionality
-
-## References
-
-- [WebRTC Specification](https://www.w3.org/TR/webrtc/)
-- [WebSocket Protocol](https://tools.ietf.org/html/rfc6455)
-- [H.264 Video Codec](https://www.itu.int/rec/T-REC-H.264)
-- [VP8/VP9 Video Codecs](https://www.webmproject.org/)
-- [AV1 Video Codec](https://aomedia.org/av1/) 
+### Interoperability
+- Cross-platform compatibility testing
+- Different browser compatibility
+- Network condition simulation
+- Security vulnerability testing 

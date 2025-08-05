@@ -184,6 +184,49 @@ impl Default for Modifiers {
     }
 }
 
+impl Default for Metrics {
+    fn default() -> Self {
+        Self {
+            fps: 0.0,
+            latency: 0,
+            bitrate: 0,
+            packet_loss: 0.0,
+            jitter: 0.0,
+            frame_drops: 0,
+            bytes_received: 0,
+            bytes_sent: 0,
+            cpu_usage: 0.0,
+            memory_usage: 0,
+        }
+    }
+}
+
+impl Default for ClientCapabilities {
+    fn default() -> Self {
+        Self {
+            video: true,
+            audio: false,
+            clipboard: true,
+            file_transfer: true,
+            touch: false,
+            multi_monitor: false,
+        }
+    }
+}
+
+impl Default for SessionStats {
+    fn default() -> Self {
+        Self {
+            frames_sent: 0,
+            frames_dropped: 0,
+            bytes_sent: 0,
+            bytes_received: 0,
+            connection_time: 0,
+            reconnections: 0,
+        }
+    }
+}
+
 /// Clipboard data
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ClipboardData {

@@ -95,7 +95,7 @@ agent/
 │   ├── auth/            # Token validation, pairing
 │   ├── config/          # Configuration parser
 │   └── platform/        # OS-specific code
-└── installer/           # Windows (NSIS) or Linux (.deb/.rpm)
+└── installer/           # Windows (NSIS)
 ```
 
 ### 🧠 Best Practices
@@ -134,7 +134,6 @@ agent/
 ### 🛠️ Packaging
 
 * Use `NSIS` or `WiX` for Windows
-* Use `.deb`, `.rpm`, or AppImage for Linux
 * Include signed installer builds and changelogs
 * Version with semantic versioning
 
