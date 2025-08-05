@@ -1,0 +1,101 @@
+import { EventEmitter } from 'events';
+import * as net from 'net';
+import * as tls from 'tls';
+export interface RDPSessionConfig {
+    host: string;
+    port: number;
+    username: string;
+    password: string;
+    domain?: string;
+    enableNLA: boolean;
+    enableTLS: boolean;
+    enableCredSSP: boolean;
+    enableGFX: boolean;
+    enableAudio: boolean;
+    enableClipboard: boolean;
+    enableFileTransfer: boolean;
+    enableDeviceRedirection: boolean;
+    enablePrinterRedirection: boolean;
+    enableSmartCardRedirection: boolean;
+    enableUSBRedirection: boolean;
+    enableCameraRedirection: boolean;
+    enableMicrophoneRedirection: boolean;
+    enableSpeakerRedirection: boolean;
+    enableMultiMonitor: boolean;
+    monitorCount: number;
+    colorDepth: number;
+    width: number;
+    height: number;
+    quality: 'low' | 'medium' | 'high' | 'ultra';
+    frameRate: number;
+    compressionLevel: number;
+    encryptionLevel: 'none' | 'low' | 'medium' | 'high';
+    authenticationLevel: 'none' | 'low' | 'medium' | 'high';
+    timeout: number;
+    reconnectAttempts: number;
+    reconnectDelay: number;
+}
+export interface RDPSession {
+    id: string;
+    socketId: string;
+    config: RDPSessionConfig;
+    status: 'connecting' | 'connected' | 'disconnected' | 'error';
+    startTime: Date;
+    lastActivity: Date;
+    frameCount: number;
+    bytesReceived: number;
+    bytesSent: number;
+    error?: string;
+    rdpConnection?: RDPConnection;
+}
+export interface RDPConnection {
+    socket: net.Socket | tls.TLSSocket;
+    isConnected: boolean;
+    sessionId: string;
+    frameBuffer: Buffer[];
+    inputQueue: any[];
+    clipboardData: any;
+    fileTransferData: any;
+    deviceData: any;
+    bytesSent: number;
+    bytesReceived: number;
+}
+export declare class RDPSessionManager extends EventEmitter {
+    private logger;
+    private sessions;
+    private rdpConnections;
+    private frameProcessors;
+    constructor();
+    createSession(socketId: string, config: RDPSessionConfig): Promise<RDPSession>;
+    private createRDPConnection;
+    private sendRDPConnectionRequest;
+    private buildRDPConnectionRequest;
+    private handleRDPData;
+    private parseRDPData;
+    private handleVideoFrame;
+    private handleClipboardData;
+    private handleFileTransferData;
+    private handleDeviceData;
+    private compressFrame;
+    private startFrameProcessing;
+    private upgradeToTLS;
+    disconnectSession(socketId: string): Promise<void>;
+    forwardMouseInput(socketId: string, data: any): void;
+    forwardKeyboardInput(socketId: string, data: any): void;
+    forwardTouchInput(socketId: string, data: any): void;
+    private buildMouseInputPacket;
+    private buildKeyboardInputPacket;
+    private buildTouchInputPacket;
+    setClipboard(socketId: string, data: any): void;
+    getClipboard(socketId: string): void;
+    private buildClipboardPacket;
+    private buildClipboardRequestPacket;
+    changeQuality(socketId: string, quality: string): void;
+    setFullscreen(socketId: string, enabled: boolean): void;
+    setMonitor(socketId: string, monitorIndex: number): void;
+    private findSessionBySocketId;
+    getSession(sessionId: string): RDPSession | undefined;
+    getAllSessions(): RDPSession[];
+    shutdown(): Promise<void>;
+}
+//# sourceMappingURL=RDPSessionManager.d.ts.map

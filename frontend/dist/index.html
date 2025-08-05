@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="HTML5 RDP - Secure browser-based remote desktop access">
+  <meta name="keywords" content="html5-rdp, remote desktop, webrtc, screen sharing, remote access">
+  <meta name="author" content="HTML5 RDP Team">
+  
+  <!-- Security Headers -->
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta http-equiv="X-XSS-Protection" content="1; mode=block">
+  <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+  
+  <!-- CSP -->
+  <meta http-equiv="Content-Security-Policy" content="
+    default-src 'self';
+    script-src 'self' 'unsafe-inline' 'unsafe-eval';
+    style-src 'self' 'unsafe-inline';
+    img-src 'self' data: blob:;
+    media-src 'self' blob:;
+    connect-src 'self' ws: wss:;
+    font-src 'self';
+    object-src 'none';
+    base-uri 'self';
+    form-action 'self';
+  ">
+  
+  <title>HTML5 RDP</title>
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" href="/favicon.png">
+  
+  <!-- Preload critical resources -->
+  <link rel="preload" href="data:video/mp2t;base64,aW1wb3J0ICcuL3N0eWxlcy9tYWluLmNzcyc7CmltcG9ydCB7IEFwcCB9IGZyb20gJy4vY29tcG9uZW50cy9BcHAnOwppbXBvcnQgeyBDb25uZWN0aW9uTWFuYWdlciB9IGZyb20gJy4vc2VydmljZXMvd2Vic29ja2V0L0Nvbm5lY3Rpb25NYW5hZ2VyJzsKaW1wb3J0IHsgTG9nZ2VyIH0gZnJvbSAnLi91dGlscy9Mb2dnZXInOwppbXBvcnQgeyBFcnJvckhhbmRsZXIgfSBmcm9tICcuL3V0aWxzL0Vycm9ySGFuZGxlcic7CmltcG9ydCB7IENvbmZpZyB9IGZyb20gJy4vdXRpbHMvQ29uZmlnJzsKCi8vIEluaXRpYWxpemUgZ2xvYmFsIGVycm9yIGhhbmRsaW5nCkVycm9ySGFuZGxlci5pbml0KCk7CgovLyBJbml0aWFsaXplIGxvZ2dlcgpjb25zdCBsb2dnZXIgPSBuZXcgTG9nZ2VyKCdNYWluJyk7CgovLyBJbml0aWFsaXplIGNvbmZpZ3VyYXRpb24KQ29uZmlnLmluaXQoKTsKCi8vIEluaXRpYWxpemUgY29ubmVjdGlvbiBtYW5hZ2VyCmNvbnN0IGNvbm5lY3Rpb25NYW5hZ2VyID0gbmV3IENvbm5lY3Rpb25NYW5hZ2VyKCk7CgovLyBJbml0aWFsaXplIHRoZSBhcHBsaWNhdGlvbgphc3luYyBmdW5jdGlvbiBpbml0QXBwKCkgewogIHRyeSB7CiAgICBsb2dnZXIuaW5mbygnSW5pdGlhbGl6aW5nIEhUTUw1IFJEUCBhcHBsaWNhdGlvbi4uLicpOwogICAgCiAgICAvLyBDaGVjayBicm93c2VyIGNvbXBhdGliaWxpdHkgZm9yIGFnZW50bGVzcyByZW1vdGUgZGVza3RvcAogICAgaWYgKCFjaGVja0Jyb3dzZXJDb21wYXRpYmlsaXR5KCkpIHsKICAgICAgdGhyb3cgbmV3IEVycm9yKCdCcm93c2VyIG5vdCBjb21wYXRpYmxlIHdpdGggSFRNTDUgUkRQJyk7CiAgICB9CiAgICAKICAgIC8vIEluaXRpYWxpemUgV2ViUlRDIGFkYXB0ZXIKICAgIGF3YWl0IGltcG9ydCgnd2VicnRjLWFkYXB0ZXInKTsKICAgIAogICAgLy8gQ3JlYXRlIGFuZCBtb3VudCB0aGUgYXBwCiAgICBjb25zdCBhcHAgPSBuZXcgQXBwKGNvbm5lY3Rpb25NYW5hZ2VyKTsKICAgIGFwcC5tb3VudCgnI2FwcCcpOwogICAgCiAgICAvLyBIaWRlIGxvYWRpbmcgc2NyZWVuCiAgICBjb25zdCBsb2FkaW5nRWxlbWVudCA9IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdsb2FkaW5nJyk7CiAgICBpZiAobG9hZGluZ0VsZW1lbnQpIHsKICAgICAgbG9hZGluZ0VsZW1lbnQuc3R5bGUuZGlzcGxheSA9ICdub25lJzsKICAgIH0KICAgIAogICAgbG9nZ2VyLmluZm8oJ0FwcGxpY2F0aW9uIGluaXRpYWxpemVkIHN1Y2Nlc3NmdWxseScpOwogIH0gY2F0Y2ggKGVycm9yKSB7CiAgICBsb2dnZXIuZXJyb3IoJ0ZhaWxlZCB0byBpbml0aWFsaXplIGFwcGxpY2F0aW9uOicsIGVycm9yKTsKICAgIEVycm9ySGFuZGxlci5oYW5kbGVFcnJvcihlcnJvcik7CiAgfQp9CgpmdW5jdGlvbiBjaGVja0Jyb3dzZXJDb21wYXRpYmlsaXR5KCk6IGJvb2xlYW4gewogIC8vIENoZWNrIGZvciBiYXNpYyBmZWF0dXJlcwogIGlmICghKCdIVE1MQ2FudmFzRWxlbWVudCcgaW4gd2luZG93KSkgewogICAgbG9nZ2VyLmVycm9yKCdDYW52YXMgbm90IHN1cHBvcnRlZCcpOwogICAgcmV0dXJuIGZhbHNlOwogIH0KICAKICBpZiAoISgnV2ViU29ja2V0JyBpbiB3aW5kb3cpKSB7CiAgICBsb2dnZXIuZXJyb3IoJ1dlYlNvY2tldCBub3Qgc3VwcG9ydGVkJyk7CiAgICByZXR1cm4gZmFsc2U7CiAgfQogIAogIGlmICghKCdsb2NhbFN0b3JhZ2UnIGluIHdpbmRvdykpIHsKICAgIGxvZ2dlci5lcnJvcignbG9jYWxTdG9yYWdlIG5vdCBzdXBwb3J0ZWQnKTsKICAgIHJldHVybiBmYWxzZTsKICB9CiAgCiAgaWYgKCEoJ2NyeXB0bycgaW4gd2luZG93KSkgewogICAgbG9nZ2VyLmVycm9yKCdDcnlwdG8gbm90IHN1cHBvcnRlZCcpOwogICAgcmV0dXJuIGZhbHNlOwogIH0KICAKICBpZiAoISgnZmV0Y2gnIGluIHdpbmRvdykpIHsKICAgIGxvZ2dlci5lcnJvcignRmV0Y2ggbm90IHN1cHBvcnRlZCcpOwogICAgcmV0dXJuIGZhbHNlOwogIH0KICAKICAvLyBDaGVjayBmb3IgV2ViUlRDIHNwZWNpZmljIGZlYXR1cmVzCiAgaWYgKCFuYXZpZ2F0b3IubWVkaWFEZXZpY2VzIHx8ICFuYXZpZ2F0b3IubWVkaWFEZXZpY2VzLmdldFVzZXJNZWRpYSkgewogICAgbG9nZ2VyLmVycm9yKCdXZWJSVEMgbWVkaWEgZGV2aWNlcyBub3Qgc3VwcG9ydGVkJyk7CiAgICByZXR1cm4gZmFsc2U7CiAgfQogIAogIC8vIENoZWNrIGZvciBSVENQZWVyQ29ubmVjdGlvbgogIGlmICghKCdSVENQZWVyQ29ubmVjdGlvbicgaW4gd2luZG93KSkgewogICAgbG9nZ2VyLmVycm9yKCdSVENQZWVyQ29ubmVjdGlvbiBub3Qgc3VwcG9ydGVkJyk7CiAgICByZXR1cm4gZmFsc2U7CiAgfQogIAogIC8vIENoZWNrIGZvciBzY3JlZW4gY2FwdHVyZSBBUEkKICBpZiAoIW5hdmlnYXRvci5tZWRpYURldmljZXMuZ2V0RGlzcGxheU1lZGlhKSB7CiAgICBsb2dnZXIuZXJyb3IoJ1NjcmVlbiBjYXB0dXJlIG5vdCBzdXBwb3J0ZWQnKTsKICAgIHJldHVybiBmYWxzZTsKICB9CiAgCiAgLy8gQ2hlY2sgZm9yIEZpbGUgU3lzdGVtIEFjY2VzcyBBUEkgKG9wdGlvbmFsKQogIGlmICghKCdzaG93T3BlbkZpbGVQaWNrZXInIGluIHdpbmRvdykpIHsKICAgIGxvZ2dlci53YXJuKCdGaWxlIFN5c3RlbSBBY2Nlc3MgQVBJIG5vdCBzdXBwb3J0ZWQgLSBmaWxlIHRyYW5zZmVyIHdpbGwgYmUgbGltaXRlZCcpOwogIH0KICAKICAvLyBDaGVjayBmb3IgV2ViIFVTQiBBUEkgKG9wdGlvbmFsKQogIGlmICghKCd1c2InIGluIG5hdmlnYXRvcikpIHsKICAgIGxvZ2dlci53YXJuKCdXZWIgVVNCIEFQSSBub3Qgc3VwcG9ydGVkIC0gZGV2aWNlIHJlZGlyZWN0aW9uIHdpbGwgYmUgbGltaXRlZCcpOwogIH0KICAKICByZXR1cm4gdHJ1ZTsKfQoKLy8gU3RhcnQgdGhlIGFwcGxpY2F0aW9uIHdoZW4gRE9NIGlzIHJlYWR5CmlmIChkb2N1bWVudC5yZWFkeVN0YXRlID09PSAnbG9hZGluZycpIHsKICBkb2N1bWVudC5hZGRFdmVudExpc3RlbmVyKCdET01Db250ZW50TG9hZGVkJywgaW5pdEFwcCk7Cn0gZWxzZSB7CiAgaW5pdEFwcCgpOwp9CgovLyBIYW5kbGUgdW5sb2FkIGV2ZW50cwp3aW5kb3cuYWRkRXZlbnRMaXN0ZW5lcignYmVmb3JldW5sb2FkJywgKCkgPT4gewogIGxvZ2dlci5pbmZvKCdBcHBsaWNhdGlvbiBzaHV0dGluZyBkb3duLi4uJyk7CiAgY29ubmVjdGlvbk1hbmFnZXIuZGlzY29ubmVjdCgpOwp9KTsKCi8vIEhhbmRsZSB2aXNpYmlsaXR5IGNoYW5nZQpkb2N1bWVudC5hZGRFdmVudExpc3RlbmVyKCd2aXNpYmlsaXR5Y2hhbmdlJywgKCkgPT4gewogIGlmIChkb2N1bWVudC5oaWRkZW4pIHsKICAgIGxvZ2dlci5pbmZvKCdQYWdlIGhpZGRlbiwgcGF1c2luZyBjb25uZWN0aW9uIHVwZGF0ZXMnKTsKICAgIGNvbm5lY3Rpb25NYW5hZ2VyLnBhdXNlKCk7CiAgfSBlbHNlIHsKICAgIGxvZ2dlci5pbmZvKCdQYWdlIHZpc2libGUsIHJlc3VtaW5nIGNvbm5lY3Rpb24gdXBkYXRlcycpOwogICAgY29ubmVjdGlvbk1hbmFnZXIucmVzdW1lKCk7CiAgfQp9KTsKCi8vIEV4cG9ydCBmb3IgZGVidWdnaW5nCih3aW5kb3cgYXMgYW55KS5IVE1MNVJEUCA9IHsKICBjb25uZWN0aW9uTWFuYWdlciwKICBsb2dnZXIsCiAgY29uZmlnOiBDb25maWcKfTsg" as="script" type="module">
+  
+  
+  <!-- Theme color -->
+  <meta name="theme-color" content="#1a1a1a">
+  <meta name="msapplication-TileColor" content="#1a1a1a">
+  
+  <!-- Apple touch icons -->
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="/apple-touch-icon-152x152.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon-180x180.png">
+  <link rel="apple-touch-icon" sizes="167x167" href="/apple-touch-icon-167x167.png">
+  
+  <!-- Manifest -->
+  <link rel="manifest" href="/manifest.json">
+  <script type="module" crossorigin src="/assets/main-8ffbfaeb.js"></script>
+  <link rel="stylesheet" href="/assets/index-9486a790.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Loading screen -->
+    <div id="loading" class="loading-screen">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">Connecting to HTML5 RDP...</div>
+    </div>
+  </div>
+  
+  
+  
+  <!-- Service Worker Registration -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(registration => {
+            console.log('SW registered: ', registration);
+          })
+          .catch(registrationError => {
+            console.log('SW registration failed: ', registrationError);
+          });
+      });
+    }
+  </script>
+</body>
+</html> 
