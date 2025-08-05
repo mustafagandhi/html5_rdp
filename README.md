@@ -352,10 +352,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-- **Documentation**: [Wiki](https://github.com/real-remote-desktop/platform/wiki)
-- **Issues**: [GitHub Issues](https://github.com/real-remote-desktop/platform/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/real-remote-desktop/platform/discussions)
-- **Email**: support@real-remote-desktop.com
+- **Documentation**: [Wiki]()
+- **Issues**: [GitHub Issues]()
+- **Discussions**: [GitHub Discussions]()
 
 ---
 
